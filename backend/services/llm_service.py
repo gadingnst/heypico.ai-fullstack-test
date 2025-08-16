@@ -7,7 +7,7 @@ from .places_service import SearchRequest, LocationBias
 
 # Configuration for LLM selection
 USE_LOCAL_LLM = True  # Set to True to use local LLM, False for OpenAI
-LOCAL_LLM_URL = "http://localhost:11434/v1/chat/completions"
+LOCAL_LLM_URL = "http://host.docker.internal:11434/v1/chat/completions"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 class ChatRequest(BaseModel):
@@ -86,7 +86,7 @@ Examples:
         "Content-Type": "application/json"
       }
       payload = {
-        "model": "llama3.2",  # Default model for local LLM
+        "model": "phi3:3.8b",  # Available model in local Ollama
         "messages": [
           {"role": "system", "content": system_prompt},
           {"role": "user", "content": user_message}
@@ -165,10 +165,14 @@ Examples:
 
       except httpx.HTTPStatusError as e:
         llm_type = "Local LLM" if USE_LOCAL_LLM else "OpenAI API"
-        raise ValueError(f"{llm_type} error: {e.response.status_code} - {e.response.text}")
+        error_detail = e.response.text if hasattr(e.response, 'text') else str(e)
+        print(f"🚨 {llm_type} HTTP Error: {e.response.status_code} - {error_detail}")
+        raise ValueError(f"{llm_type} error: {e.response.status_code} - {error_detail}")
       except httpx.TimeoutException:
         llm_type = "Local LLM" if USE_LOCAL_LLM else "OpenAI API"
+        print(f"🚨 {llm_type} Timeout Error")
         raise ValueError(f"{llm_type} request timed out")
       except Exception as e:
         llm_type = "Local LLM" if USE_LOCAL_LLM else "OpenAI API"
+        print(f"🚨 {llm_type} Unexpected Error: {str(e)}")
         raise ValueError(f"Unexpected error calling {llm_type}: {str(e)}")
