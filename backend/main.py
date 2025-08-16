@@ -4,7 +4,7 @@ import os
 import logging
 from services.places_service import PlacesService, SearchRequest
 from services.geocoding_service import GeocodingService
-from services.llm_service import LLMService, ChatRequest, ChatResponse
+from services.llm_service import LLMService, ChatRequest, ChatResponse, ChatSearchResponse
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -54,7 +54,7 @@ async def extract_search_request(body: ChatRequest, authorization: str = Header(
   except Exception as e:
     raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
 
-@app.post("/v1/chat/search")
+@app.post("/v1/chat/search", response_model=ChatSearchResponse)
 async def chat_and_search(body: ChatRequest, authorization: str = Header(None)):
   """
   Extract search request from natural language and execute the search
@@ -86,13 +86,16 @@ async def chat_and_search(body: ChatRequest, authorization: str = Header(None)):
     
     logger.info(f"🎯 Search completed: {len(search_results.get('results', []))} results found")
     
-    return {
-      "extraction": {
-        "search_request": search_request.dict(),
-        "explanation": chat_response.explanation
-      },
-      "results": search_results
-    }
+    # Generate response message from LLM
+    response_message = await LLMService.generate_response_message(body.message, search_results)
+    
+    logger.info(f"💬 Generated response: '{response_message}'")
+    
+    return ChatSearchResponse(
+      query=search_request.query,
+      places=search_results.get('results', []),
+      response_message=response_message
+    )
     
   except ValueError as e:
     raise HTTPException(status_code=400, detail=str(e))

@@ -6,7 +6,7 @@ from pydantic import BaseModel
 from .places_service import SearchRequest, LocationBias
 
 # Configuration for LLM selection
-USE_LOCAL_LLM = True  # Set to True to use local LLM, False for OpenAI
+USE_LOCAL_LLM = False  # Set to True to use local LLM, False for OpenAI
 LOCAL_LLM_URL = "http://host.docker.internal:11434/v1/chat/completions"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
@@ -18,10 +18,108 @@ class ChatResponse(BaseModel):
   search_request: SearchRequest
   explanation: str
 
+class ChatSearchResponse(BaseModel):
+  query: str
+  places: list
+  response_message: str
+
 class LLMService:
   """
   Service for handling LLM operations to extract search requests from natural language
   """
+
+  @staticmethod
+  async def generate_response_message(user_message: str, search_results: dict) -> str:
+    """
+    Generate a conversational response message based on search results
+
+    Args:
+      user_message: Original user message
+      search_results: Search results from places service
+
+    Returns:
+      Generated response message from LLM
+    """
+    if not USE_LOCAL_LLM and not OPENAI_API_KEY:
+      return "Saya telah menemukan beberapa tempat yang sesuai dengan pencarian Anda."
+
+    # Create system prompt for response generation
+    system_prompt = """
+Anda adalah asisten yang membantu pengguna mencari tempat. Berikan respons yang ramah dan informatif dalam bahasa Indonesia berdasarkan hasil pencarian.
+
+Tugas Anda:
+1. Berikan ringkasan singkat tentang hasil pencarian
+2. Sebutkan jumlah tempat yang ditemukan
+3. Berikan saran atau rekomendasi jika ada
+4. Gunakan bahasa yang natural dan ramah
+5. Jangan terlalu panjang, maksimal 2-3 kalimat
+
+Contoh respons:
+- "Saya menemukan 5 restoran di Jakarta yang sesuai dengan pencarian Anda. Beberapa di antaranya memiliki rating tinggi dan buka sekarang."
+- "Ada 3 kafe di Medan yang cocok untuk Anda. Semuanya memiliki rating di atas 4 bintang!"
+"""
+
+    results_count = len(search_results.get('results', []))
+    location_info = search_results.get('location', 'area yang Anda cari')
+
+    user_prompt = f"""
+Pesan pengguna: "{user_message}"
+Jumlah hasil ditemukan: {results_count}
+Lokasi: {location_info}
+
+Berikan respons yang ramah dan informatif.
+"""
+
+    # Prepare API request
+    if USE_LOCAL_LLM:
+      api_url = LOCAL_LLM_URL
+      headers = {"Content-Type": "application/json"}
+      payload = {
+        "model": "phi3:3.8b",
+        "messages": [
+          {"role": "system", "content": system_prompt},
+          {"role": "user", "content": user_prompt}
+        ],
+        "temperature": 0.7,
+        "max_tokens": 150
+      }
+    else:
+      api_url = "https://api.openai.com/v1/chat/completions"
+      headers = {
+        "Authorization": f"Bearer {OPENAI_API_KEY}",
+        "Content-Type": "application/json"
+      }
+      payload = {
+        "model": "gpt-3.5-turbo",
+        "messages": [
+          {"role": "system", "content": system_prompt},
+          {"role": "user", "content": user_prompt}
+        ],
+        "temperature": 0.7,
+        "max_tokens": 150
+      }
+
+    try:
+      async with httpx.AsyncClient() as client:
+        response = await client.post(
+          api_url,
+          headers=headers,
+          json=payload,
+          timeout=15.0
+        )
+        response.raise_for_status()
+
+        result = response.json()
+        content = result["choices"][0]["message"]["content"]
+        return content.strip()
+
+    except Exception as e:
+      print(f"🚨 Error generating response message: {str(e)}")
+      # Fallback response
+      if results_count > 0:
+        return f"Saya menemukan {results_count} tempat yang sesuai dengan pencarian Anda. Silakan lihat hasil di bawah ini!"
+      else:
+        return "Maaf, saya tidak menemukan tempat yang sesuai dengan pencarian Anda. Coba dengan kata kunci yang berbeda."
 
   @staticmethod
   async def extract_search_request(chat_request: ChatRequest) -> ChatResponse:
