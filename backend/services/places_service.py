@@ -1,7 +1,12 @@
 import httpx
 import os
+import logging
 from typing import List, Dict, Any
 from pydantic import BaseModel, Field
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 GMAPS_SERVER_KEY = os.getenv("GMAPS_SERVER_KEY")
 GMAPS_EMBED_KEY = os.getenv("GMAPS_EMBED_KEY")
@@ -56,6 +61,10 @@ class PlacesService:
       "regionCode": "ID"
     }
     
+    logger.info(f"🔍 Places search query: '{search_request.query}'")
+    logger.info(f"📍 Location name: '{search_request.location_name}'")
+    logger.info(f"🌍 Geocoded location: {geocoded_location}")
+    
     # Handle location bias
     if search_request.location_bias:
       request_body["locationBias"] = {
@@ -67,8 +76,9 @@ class PlacesService:
           "radius": search_request.location_bias.radius_m
         }
       }
+      logger.info(f"📍 Using location_bias: {search_request.location_bias}")
     elif geocoded_location:
-      request_body["locationBias"] = {
+      location_bias = {
         "circle": {
           "center": {
             "latitude": geocoded_location.get("lat"),
@@ -77,6 +87,10 @@ class PlacesService:
           "radius": 8000
         }
       }
+      request_body["locationBias"] = location_bias
+      logger.info(f"📍 Using geocoded location bias: {location_bias}")
+    else:
+      logger.warning(f"⚠️ No location bias set - search will be global!")
     
     # Add rating filter if specified
     if search_request.min_rating:
@@ -87,10 +101,15 @@ class PlacesService:
       request_body["openNow"] = True
     
     # Call new Places API
+    logger.info(f"📡 Places API request body: {request_body}")
+    
     async with httpx.AsyncClient(timeout=10) as client:
       response = await client.post(url, json=request_body, headers=headers)
       response.raise_for_status()
       data = response.json()
+      
+      places_count = len(data.get("places", []))
+      logger.info(f"📍 Places API returned {places_count} results")
     
     # Process results
     results = PlacesService._process_new_api_results(
