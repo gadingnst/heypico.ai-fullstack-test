@@ -23,8 +23,22 @@ const PlaceCard: React.FC<PlaceCardProps> = ({ place, onViewOnMap }) => {
   /**
    * Get the price level display
    */
-  const getPriceLevelDisplay = (level?: number) => {
+  const getPriceLevelDisplay = (level?: number | string) => {
     if (!level) return null;
+    
+    // Handle string values from Google Places API
+    if (typeof level === 'string') {
+      const stringPriceMap: Record<string, string> = {
+        'PRICE_LEVEL_FREE': 'Free',
+        'PRICE_LEVEL_INEXPENSIVE': '$',
+        'PRICE_LEVEL_MODERATE': '$$',
+        'PRICE_LEVEL_EXPENSIVE': '$$$',
+        'PRICE_LEVEL_VERY_EXPENSIVE': '$$$$',
+      };
+      return stringPriceMap[level] || level;
+    }
+    
+    // Handle numeric values
     const priceMap: Record<number, string> = {
       0: 'Free',
       1: '$',

@@ -23,7 +23,7 @@ export interface Place {
   address: string;
   rating?: number;
   user_ratings_total?: number;
-  price_level?: number;
+  price_level?: number | string;
   location: {
     lat: number;
     lng: number;
@@ -34,7 +34,11 @@ export interface Place {
 }
 
 export interface SearchResponse {
-  places: Place[];
+  query: string;
+  results: Place[];
+  paging: {
+    next_page_token: string | null;
+  };
 }
 
 export interface ApiError {

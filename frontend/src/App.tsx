@@ -25,7 +25,7 @@ function App() {
 
     try {
       const response: SearchResponse = await apiService.searchPlaces(searchRequest);
-      setPlaces(response.places || []);
+      setPlaces(response.results || []);
 
       // Update map center if location bias is provided
       if (searchRequest.location_bias) {
@@ -36,8 +36,8 @@ function App() {
       }
 
       // If places found, center map on first place
-      if (response.places && response.places.length > 0) {
-        const firstPlace = response.places[0];
+      if (response.results && response.results.length > 0) {
+        const firstPlace = response.results[0];
         setMapCenter({
           lat: firstPlace.location.lat,
           lng: firstPlace.location.lng,
