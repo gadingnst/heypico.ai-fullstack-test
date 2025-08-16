@@ -5,6 +5,9 @@ from typing import Dict, Any
 from pydantic import BaseModel
 from .places_service import SearchRequest, LocationBias
 
+# Configuration for LLM selection
+USE_LOCAL_LLM = True  # Set to True to use local LLM, False for OpenAI
+LOCAL_LLM_URL = "http://localhost:11434/v1/chat/completions"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 class ChatRequest(BaseModel):
@@ -23,7 +26,7 @@ class LLMService:
   @staticmethod
   async def extract_search_request(chat_request: ChatRequest) -> ChatResponse:
     """
-    Extract SearchRequest from natural language using OpenAI compatible API
+    Extract SearchRequest from natural language using OpenAI compatible API or local LLM
 
     Args:
       chat_request: The chat request containing user message
@@ -31,8 +34,8 @@ class LLMService:
     Returns:
       ChatResponse containing extracted SearchRequest and explanation
     """
-    if not OPENAI_API_KEY:
-      raise ValueError("OPENAI_API_KEY environment variable is required")
+    if not USE_LOCAL_LLM and not OPENAI_API_KEY:
+      raise ValueError("OPENAI_API_KEY environment variable is required when using cloud LLM")
 
     # Create system prompt for extraction
     system_prompt = """
@@ -75,26 +78,43 @@ Examples:
     if chat_request.location_context:
       user_message += f" (Current location context: {chat_request.location_context})"
 
-    # Prepare OpenAI API request
-    headers = {
-      "Authorization": f"Bearer {OPENAI_API_KEY}",
-      "Content-Type": "application/json"
-    }
-
-    payload = {
-      "model": "gpt-3.5-turbo",
-      "messages": [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_message}
-      ],
-      "temperature": 0.1,
-      "max_tokens": 500
-    }
+    # Prepare API request based on LLM selection
+    if USE_LOCAL_LLM:
+      # Local LLM configuration
+      api_url = LOCAL_LLM_URL
+      headers = {
+        "Content-Type": "application/json"
+      }
+      payload = {
+        "model": "llama3.2",  # Default model for local LLM
+        "messages": [
+          {"role": "system", "content": system_prompt},
+          {"role": "user", "content": user_message}
+        ],
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
+    else:
+      # OpenAI cloud LLM configuration
+      api_url = "https://api.openai.com/v1/chat/completions"
+      headers = {
+        "Authorization": f"Bearer {OPENAI_API_KEY}",
+        "Content-Type": "application/json"
+      }
+      payload = {
+        "model": "gpt-3.5-turbo",
+        "messages": [
+          {"role": "system", "content": system_prompt},
+          {"role": "user", "content": user_message}
+        ],
+        "temperature": 0.1,
+        "max_tokens": 500
+      }
 
     async with httpx.AsyncClient() as client:
       try:
         response = await client.post(
-          "https://api.openai.com/v1/chat/completions",
+          api_url,
           headers=headers,
           json=payload,
           timeout=30.0
@@ -144,8 +164,11 @@ Examples:
           raise ValueError(f"Missing required field in LLM response: {e}")
 
       except httpx.HTTPStatusError as e:
-        raise ValueError(f"OpenAI API error: {e.response.status_code} - {e.response.text}")
+        llm_type = "Local LLM" if USE_LOCAL_LLM else "OpenAI API"
+        raise ValueError(f"{llm_type} error: {e.response.status_code} - {e.response.text}")
       except httpx.TimeoutException:
-        raise ValueError("OpenAI API request timed out")
+        llm_type = "Local LLM" if USE_LOCAL_LLM else "OpenAI API"
+        raise ValueError(f"{llm_type} request timed out")
       except Exception as e:
-        raise ValueError(f"Unexpected error calling OpenAI API: {str(e)}")
+        llm_type = "Local LLM" if USE_LOCAL_LLM else "OpenAI API"
+        raise ValueError(f"Unexpected error calling {llm_type}: {str(e)}")
