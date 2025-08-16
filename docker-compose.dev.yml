@@ -1,0 +1,60 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.dev
+    volumes:
+      - ./backend:/app
+    environment:
+      # force polling di Mac/VM biar reload stabil
+      - WATCHFILES_FORCE_POLLING=true
+      - FRONTEND_ORIGIN=http://localhost:${FRONTEND_PORT}
+      - BACKEND_BEARER=${BACKEND_BEARER}
+      - GMAPS_SERVER_KEY=${GMAPS_SERVER_KEY}
+      - GMAPS_EMBED_KEY=${GMAPS_EMBED_KEY}
+    ports:
+      - "${BACKEND_PORT}:8000"
+
+  frontend:
+    # dev server Vite (gantikan nginx image build)
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0 --port ${FRONTEND_PORT}"
+    volumes:
+      - ./frontend:/app
+    environment:
+      - VITE_API_BASE=http://localhost:${BACKEND_PORT}
+      - VITE_BACKEND_BEARER=${BACKEND_BEARER}
+      # vite di Mac kadang perlu polling
+      - CHOKIDAR_USEPOLLING=true
+    ports:
+      - "${FRONTEND_PORT}:${FRONTEND_PORT}"
+    depends_on:
+      - backend
+
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    depends_on:
+      - ollama
+    ports:
+      - "3000:8080"
+    restart: unless-stopped
+    # biasanya tak perlu reload, tapi kalau mau custom plugin lokal:
+    volumes:
+      - openwebui_data:/app/backend/data
+
+  ollama:
+    image: ollama/ollama:0.3.14
+    platform: linux/arm64 # for Mac Apple Silicon (M1/M2/M3),
+    ports:
+      - "${OLLAMA_PORT}:11434"
+    volumes:
+      - ollama_models:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  openwebui_data:
+  ollama_models:

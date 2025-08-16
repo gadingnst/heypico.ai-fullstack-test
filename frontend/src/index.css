@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom styles */
+@layer base {
+  html {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+@layer components {
+  .map-container {
+    @apply w-full h-96 rounded-lg shadow-lg;
+  }
+
+  .place-card {
+    @apply bg-base-100 shadow-md rounded-lg p-4 hover:shadow-lg transition-shadow duration-200;
+  }
+
+  .search-input {
+    @apply input input-bordered w-full max-w-xs focus:input-primary;
+  }
+}
