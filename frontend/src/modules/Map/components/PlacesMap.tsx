@@ -60,11 +60,16 @@ function PlacesMap({ places }: PlacesMapProps) {
               : '';
 
             return `
+              <style>
+                .gm-style-iw-chr {
+                  display: none !important;
+                }
+              </style>
               <div style="
                 max-width: 280px;
                 font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
                 line-height: 1.4;
-                padding-top: -24px;
+                padding-top: 16px;
               ">
                 <div style="
                   display: flex;
