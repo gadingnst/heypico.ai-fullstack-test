@@ -1,4 +1,8 @@
-# HeyPico.ai Full-Stack Test Project
+# AI Location Assistant 🤖🗺️
+
+## 🌐 Live Demonstration
+- **Backend API**: [https://heypico-api.gading.dev/](https://heypico-api.gading.dev/)
+- **Frontend Demo**: [https://heypico-test.gading.dev](https://heypico-test.gading.dev)
 
 A comprehensive full-stack AI-powered location assistant application with FastAPI backend and React frontend, featuring intelligent place search using Google Maps API and LLM integration.
 
