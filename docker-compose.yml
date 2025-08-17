@@ -7,7 +7,8 @@ services:
     env_file: ./.env
     environment:
       - BACKEND_PORT=${BACKEND_PORT}
-      - BACKEND_BEARER=${BACKEND_BEARER}
+      - DUMMY_BYPASS_UNAME=${DUMMY_BYPASS_UNAME}
+      - DUMMY_BYPASS_PASSWORD=${DUMMY_BYPASS_PASSWORD}
       - GMAPS_SERVER_KEY=${GMAPS_SERVER_KEY}
       - GMAPS_EMBED_KEY=${GMAPS_EMBED_KEY}
       - FRONTEND_ORIGIN=http://localhost:${FRONTEND_PORT}
@@ -23,7 +24,6 @@ services:
     container_name: frontend
     environment:
       - VITE_BACKEND_URL=http://localhost:8000
-      - VITE_BACKEND_BEARER=${BACKEND_BEARER}
       - VITE_GOOGLE_MAPS_EMBED_KEY=${GMAPS_EMBED_KEY}
     ports:
       - "${FRONTEND_PORT}:80"

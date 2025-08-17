@@ -6,7 +6,8 @@ class Config:
 
   # Server Configuration
   FRONTEND_ORIGIN: str = os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")
-  BACKEND_BEARER: str = os.getenv("BACKEND_BEARER", "change_me_strong_token")
+  DUMMY_BYPASS_UNAME: str = os.getenv("DUMMY_BYPASS_UNAME", "admin")
+  DUMMY_BYPASS_PASSWORD: str = os.getenv("DUMMY_BYPASS_PASSWORD", "password")
 
   # LLM Configuration
   USE_LOCAL_LLM: bool = os.getenv("USE_LOCAL_LLM", "false").lower() == "true"

@@ -45,8 +45,9 @@ A full-stack application with FastAPI backend and React frontend for place searc
    GMAPS_SERVER_KEY=your_google_maps_server_api_key
    GMAPS_EMBED_KEY=your_google_maps_embed_api_key
 
-   # Backend Configuration
-   BACKEND_BEARER=your_secure_bearer_token
+   # Auth Configuration
+   DUMMY_BYPASS_UNAME=your_username
+   DUMMY_BYPASS_PASSWORD=your_password
    FRONTEND_ORIGIN=http://localhost:5173
    ```
 
@@ -114,9 +115,15 @@ Once the backend is running, visit:
 
 ### Authentication
 
-API endpoints require Bearer token authentication:
+Request a token using the `/v1/auth` endpoint with the dummy credentials:
 ```bash
-Authorization: Bearer your_backend_bearer_token
+curl -X POST http://localhost:8000/v1/auth -H "Content-Type: application/json" \
+  -d '{"username":"your_username","password":"your_password"}'
+```
+
+Use the returned token for authenticated requests:
+```bash
+Authorization: Bearer <token>
 ```
 
 ## Testing
@@ -150,7 +157,8 @@ npm run test:coverage
 1. **Update environment variables for production**
    ```env
    FRONTEND_ORIGIN=https://your-domain.com
-   BACKEND_BEARER=secure_production_token
+   DUMMY_BYPASS_UNAME=your_username
+   DUMMY_BYPASS_PASSWORD=your_password
    ```
 
 2. **Build and deploy with Docker Compose**
@@ -214,7 +222,8 @@ npx serve -s dist -l 5173
 |----------|-------------|----------|----------|
 | `GMAPS_SERVER_KEY` | Google Maps Server API Key | Yes | - |
 | `GMAPS_EMBED_KEY` | Google Maps Embed API Key | Yes | - |
-| `BACKEND_BEARER` | Backend API authentication token | No | `change_me_strong_token` |
+| `DUMMY_BYPASS_UNAME` | Dummy username for auth | No | `admin` |
+| `DUMMY_BYPASS_PASSWORD` | Dummy password for auth | No | `password` |
 | `FRONTEND_ORIGIN` | Frontend URL for CORS | No | `http://localhost:5173` |
 
 ## Troubleshooting

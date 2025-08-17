@@ -2,6 +2,8 @@ from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 from services.llm_service import LLMService, ChatRequest, ChatResponse
+from services.auth_service import AuthService, AuthRequest, AuthResponse
+from services.rate_limiter import default_rate_limiter
 from configs.envs import config
 
 # Configure logging
@@ -22,10 +24,18 @@ app.add_middleware(
 async def healthz():
   return {"ok": True}
 
+@app.post("/v1/auth", response_model=AuthResponse)
+async def auth(body: AuthRequest):
+  token = AuthService.authenticate(body.username, body.password)
+  return {"token": token}
+
 @app.post("/v1/chat", response_model=ChatResponse)
 async def chat(body: ChatRequest, authorization: str = Header(None)):
-  if authorization != f"Bearer {config.BACKEND_BEARER}":
-    raise HTTPException(status_code=401, detail="unauthorized")
+  # Extract and validate token
+  token = AuthService.extract_token_from_header(authorization)
+  
+  # Apply rate limiting
+  default_rate_limiter.check_rate_limit(token)
 
   try:
     logger.info(f"💬 Chat request: '{body.message}'")
