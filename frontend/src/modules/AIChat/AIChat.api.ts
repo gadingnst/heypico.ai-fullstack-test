@@ -1,4 +1,4 @@
-import { BACKEND_BEARER, BACKEND_URL } from "../../configs/envs";
+import { BACKEND_URL } from "../../configs/envs";
 import BaseHttp from "../../libs/BaseHttp";
 
 export interface Location {
@@ -30,15 +30,16 @@ export interface ChatResponse {
   places?: PlaceResult[];
 }
 
-const Http = new BaseHttp({
-  baseURL: BACKEND_URL,
-  headers: {
-    'Authorization': `Bearer ${BACKEND_BEARER}`,
-    'Content-Type': 'application/json'
-  }
-})
-
 export async function chat(_userMsg: ChatMessage, _history: ChatMessage[]) {
+  const token = localStorage.getItem('token') || ''
+  const Http = new BaseHttp({
+    baseURL: BACKEND_URL,
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  })
+
   const response = await Http.post(`/v1/chat`, {
     body: JSON.stringify({
       message: _userMsg.content,
