@@ -1,4 +1,5 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
 import useAIChat from '@/modules/AIChat/hooks/useAIChat';
 import PlacesMap from '@/modules/Map/components/PlacesMap';
 
@@ -62,7 +63,30 @@ function AIChatRoom() {
                       : 'chat-bubble-secondary'
                   }`}
                 >
-                  <div>{message.content}</div>
+                  <div
+                    className="prose prose-sm max-w-none"
+                    style={{
+                      color: 'white',
+                      '--tw-prose-body': 'white',
+                      '--tw-prose-headings': 'white',
+                      '--tw-prose-lead': 'white',
+                      '--tw-prose-links': 'white',
+                      '--tw-prose-bold': 'white',
+                      '--tw-prose-counters': 'white',
+                      '--tw-prose-bullets': 'white',
+                      '--tw-prose-hr': 'white',
+                      '--tw-prose-quotes': 'white',
+                      '--tw-prose-quote-borders': 'white',
+                      '--tw-prose-captions': 'white',
+                      '--tw-prose-code': 'white',
+                      '--tw-prose-pre-code': 'white',
+                      '--tw-prose-pre-bg': 'rgba(255, 255, 255, 0.1)',
+                      '--tw-prose-th-borders': 'white',
+                      '--tw-prose-td-borders': 'white'
+                    } as React.CSSProperties}
+                  >
+                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                  </div>
                   {message.places && message.places.length > 0 && (
                     <div className="mt-2">
                       <PlacesMap places={message.places} />
