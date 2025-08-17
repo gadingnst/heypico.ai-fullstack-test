@@ -43,11 +43,27 @@ function useAIChat() {
       };
 
       setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error sending message:', error);
+      
+      let errorContent = 'Sorry, an error occurred. Please try again.';
+      
+      // Handle HTTP errors with specific messages from backend
+      if (error && typeof error === 'object' && 'response' in error) {
+        const httpError = error as { response: Response };
+        try {
+          const errorData = await httpError.response.json();
+          if (errorData?.detail) {
+            errorContent = errorData.detail;
+          }
+        } catch {
+          // If JSON parsing fails, use default message
+        }
+      }
+      
       const errorMessage: ChatMessage = {
         role: 'assistant',
-        content: 'Sorry, an error occurred. Please try again.'
+        content: errorContent
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {

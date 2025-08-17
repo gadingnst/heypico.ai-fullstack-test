@@ -57,7 +57,10 @@ async def chat(body: ChatRequest, authorization: str = Header(None)):
   now = datetime.utcnow()
   recent = [t for t in TOKEN_REQUESTS[token] if now - t < RATE_WINDOW]
   if len(recent) >= RATE_LIMIT:
-    raise HTTPException(status_code=429, detail="rate limit exceeded")
+    raise HTTPException(
+      status_code=429,
+      detail="You have reached the maximum usage limit. Please try sending the message again later."
+    )
   recent.append(now)
   TOKEN_REQUESTS[token] = recent
 

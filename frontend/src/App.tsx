@@ -71,7 +71,7 @@ function App() {
             HeyPico AI Chat
           </h1>
           <p className="text-base-content/70">
-            Chat with AI assistant
+            Chat with AI Location assistant
           </p>
           <button className="btn btn-sm btn-outline absolute right-0 top-0" onClick={handleLogout}>
             Logout
