@@ -7,6 +7,10 @@
   html {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
+
+  .gm-style-iw-chr {
+    display: none;
+  }
 }
 
 @layer components {
@@ -22,3 +26,4 @@
     @apply input input-bordered w-full max-w-xs focus:input-primary;
   }
 }
+
