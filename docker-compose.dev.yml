@@ -9,7 +9,8 @@ services:
       # force polling on Mac/VM for stable reload
       - WATCHFILES_FORCE_POLLING=true
       - FRONTEND_ORIGIN=http://localhost:${FRONTEND_PORT}
-      - BACKEND_BEARER=${BACKEND_BEARER}
+      - DUMMY_BYPASS_UNAME=${DUMMY_BYPASS_UNAME}
+      - DUMMY_BYPASS_PASSWORD=${DUMMY_BYPASS_PASSWORD}
       - GMAPS_SERVER_KEY=${GMAPS_SERVER_KEY}
       - GMAPS_EMBED_KEY=${GMAPS_EMBED_KEY}
       - CLOUD_LLM_API_KEY=${CLOUD_LLM_API_KEY}
@@ -25,7 +26,6 @@ services:
       - ./frontend:/app
     environment:
       - VITE_BACKEND_URL=http://localhost:${BACKEND_PORT}
-      - VITE_BACKEND_BEARER=${BACKEND_BEARER}
       - VITE_GOOGLE_MAPS_EMBED_KEY=${GMAPS_EMBED_KEY}
       - CHOKIDAR_USEPOLLING=true # vite in Mac sometimes requires pooling
     ports:
