@@ -69,8 +69,14 @@ class MapService:
                         ),
                     }
                     results.append(processed)
+                # Sort places by rating and number of ratings (both descending)
+                results.sort(
+                    key=lambda p: (p.get("rating", 0), p.get("user_ratings_total", 0)),
+                    reverse=True,
+                )
 
-                return results
+                # Limit to top 10 results
+                return results[:10]
             except Exception as e:
                 print(f"🚨 MapService Error: {e}")
                 return None

@@ -40,6 +40,59 @@ class LLMService:
   Service for handling standard LLM chat operations
   """
 
+  _last_places: Optional[List[dict]] = None
+
+  @staticmethod
+  async def _is_follow_up(message: str) -> bool:
+    """Use LLM to determine if user refers to previous places"""
+    try:
+      messages = [
+        {
+          "role": "system",
+          "content": "You are an intent classifier. Reply with YES or NO only.",
+        },
+        {
+          "role": "user",
+          "content": (
+            "Does the following message refer to previously mentioned places or ask which of them is best? "
+            "Answer YES or NO only.\n\n" + message
+          ),
+        },
+      ]
+
+      if config.USE_LOCAL_LLM:
+        api_url = config.LOCAL_LLM_URL
+        headers = {"Content-Type": "application/json"}
+        payload = {
+          "model": config.LOCAL_MODEL_NAME,
+          "messages": messages,
+          "temperature": 0,
+          "max_tokens": 5,
+        }
+      else:
+        api_url = config.CLOUD_LLM_URL
+        headers = {
+          "Authorization": f"Bearer {config.CLOUD_LLM_API_KEY}",
+          "Content-Type": "application/json",
+        }
+        payload = {
+          "model": config.CLOUD_MODEL_NAME,
+          "messages": messages,
+          "temperature": 0,
+          "max_completion_tokens": 5,
+        }
+
+      async with httpx.AsyncClient() as client:
+        resp = await client.post(api_url, headers=headers, json=payload, timeout=config.LLM_TIMEOUT)
+        resp.raise_for_status()
+        result = resp.json()
+        content = result["choices"][0]["message"]["content"].strip().lower()
+        return content.startswith("y")
+    except Exception as e:
+      llm_type = "Local LLM" if config.USE_LOCAL_LLM else "OpenAI API"
+      print(f"🚨 {llm_type} Error detecting follow-up intent: {str(e)}")
+      return False
+
   @staticmethod
   async def _needs_place_search(message: str) -> bool:
     """Use LLM to determine if message requires a place search"""
@@ -96,6 +149,20 @@ class LLMService:
     if not config.USE_LOCAL_LLM and not config.CLOUD_LLM_API_KEY:
       raise ValueError("CLOUD_LLM_API_KEY environment variable is required when using cloud LLM")
 
+    if LLMService._last_places and await LLMService._is_follow_up(chat_request.message):
+      best_place = max(
+        LLMService._last_places,
+        key=lambda p: (p.get("rating", 0), p.get("user_ratings_total", 0)),
+      )
+      name = best_place.get("name")
+      rating = best_place.get("rating")
+      reviews = best_place.get("user_ratings_total")
+      response = (
+        f"Based on your previous search, {name} is the highest rated option "
+        f"with a rating of {rating} from {reviews} reviews."
+      )
+      return ChatResponse(response=response, places=LLMService._last_places)
+
     messages = [{"role": "system", "content": config.SYSTEM_PROMPT}]
 
     # Add chat history if provided
@@ -142,6 +209,7 @@ class LLMService:
         if await LLMService._needs_place_search(chat_request.message):
           places = await MapService.search_places(chat_request.message)
           if places:
+            LLMService._last_places = places
             summaries = []
             for idx, p in enumerate(places, 1):
               line = f"{idx}. {p.get('name')}"
