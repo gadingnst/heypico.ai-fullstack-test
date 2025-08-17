@@ -11,7 +11,7 @@ services:
       - GMAPS_SERVER_KEY=${GMAPS_SERVER_KEY}
       - GMAPS_EMBED_KEY=${GMAPS_EMBED_KEY}
       - FRONTEND_ORIGIN=http://localhost:${FRONTEND_PORT}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CLOUD_LLM_API_KEY=${CLOUD_LLM_API_KEY}
     ports:
       - "${BACKEND_PORT}:8000"
     restart: unless-stopped
@@ -24,8 +24,7 @@ services:
     environment:
       - VITE_BACKEND_URL=http://localhost:8000
       - VITE_BACKEND_BEARER=${BACKEND_BEARER}
-    depends_on:
-      - backend
+      - VITE_GOOGLE_MAPS_EMBED_KEY=${GMAPS_EMBED_KEY}
     ports:
       - "${FRONTEND_PORT}:80"
     restart: unless-stopped

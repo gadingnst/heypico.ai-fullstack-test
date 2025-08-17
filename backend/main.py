@@ -1,8 +1,8 @@
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-import os
 import logging
 from services.llm_service import LLMService, ChatRequest, ChatResponse
+from configs.envs import config
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -12,13 +12,11 @@ app = FastAPI()
 
 app.add_middleware(
   CORSMiddleware,
-  allow_origins=[os.getenv("FRONTEND_ORIGIN", "http://localhost:5173")],
+  allow_origins=[config.FRONTEND_ORIGIN],
   allow_credentials=True,
   allow_methods=["*"],
   allow_headers=["*"],
 )
-
-BACKEND_BEARER = os.getenv("BACKEND_BEARER", "change_me_strong_token")
 
 @app.get("/healthz")
 async def healthz():
@@ -26,7 +24,7 @@ async def healthz():
 
 @app.post("/v1/chat", response_model=ChatResponse)
 async def chat(body: ChatRequest, authorization: str = Header(None)):
-  if authorization != f"Bearer {BACKEND_BEARER}":
+  if authorization != f"Bearer {config.BACKEND_BEARER}":
     raise HTTPException(status_code=401, detail="unauthorized")
 
   try:

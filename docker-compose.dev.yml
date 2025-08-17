@@ -12,7 +12,7 @@ services:
       - BACKEND_BEARER=${BACKEND_BEARER}
       - GMAPS_SERVER_KEY=${GMAPS_SERVER_KEY}
       - GMAPS_EMBED_KEY=${GMAPS_EMBED_KEY}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - CLOUD_LLM_API_KEY=${CLOUD_LLM_API_KEY}
     ports:
       - "${BACKEND_PORT}:8000"
 
@@ -26,6 +26,7 @@ services:
     environment:
       - VITE_BACKEND_URL=http://localhost:${BACKEND_PORT}
       - VITE_BACKEND_BEARER=${BACKEND_BEARER}
+      - VITE_GOOGLE_MAPS_EMBED_KEY=${GMAPS_EMBED_KEY}
       - CHOKIDAR_USEPOLLING=true # vite in Mac sometimes requires pooling
     ports:
       - "${FRONTEND_PORT}:${FRONTEND_PORT}"
