@@ -32,7 +32,7 @@ class LLMService:
 
     # Create system prompt
     system_prompt = """
-      You are a helpful and friendly AI assistant. Respond naturally to the user's message in Indonesian.
+      You are a helpful and friendly AI assistant. Respond naturally to the user's message in English.
       Keep your responses conversational, helpful, and engaging.
     """
 
@@ -81,4 +81,4 @@ class LLMService:
       except Exception as e:
         llm_type = "Local LLM" if USE_LOCAL_LLM else "OpenAI API"
         print(f"🚨 {llm_type} Error in chat: {str(e)}")
-        return ChatResponse(response="Maaf, saya mengalami kesulitan dalam merespons. Silakan coba lagi.")
+        return ChatResponse(response="Sorry, I'm having trouble responding. Please try again.")

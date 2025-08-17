@@ -6,7 +6,7 @@ services:
     volumes:
       - ./backend:/app
     environment:
-      # force polling di Mac/VM biar reload stabil
+      # force polling on Mac/VM for stable reload
       - WATCHFILES_FORCE_POLLING=true
       - FRONTEND_ORIGIN=http://localhost:${FRONTEND_PORT}
       - BACKEND_BEARER=${BACKEND_BEARER}

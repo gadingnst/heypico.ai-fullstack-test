@@ -11,7 +11,7 @@ function App() {
             HeyPico AI Chat
           </h1>
           <p className="text-base-content/70">
-            Chat dengan AI assistant
+            Chat with AI assistant
           </p>
         </div>
 

@@ -46,7 +46,7 @@ function useAIChat() {
       console.error('Error sending message:', error);
       const errorMessage: ChatMessage = {
         role: 'assistant',
-        content: 'Maaf, terjadi kesalahan. Silakan coba lagi.'
+        content: 'Sorry, an error occurred. Please try again.'
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {

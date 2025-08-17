@@ -31,7 +31,7 @@ function AIChatRoom() {
         <div className="h-[70vh] overflow-y-auto p-4 space-y-4">
           {messages.length === 0 ? (
             <div className="text-center text-base-content/50 mt-20">
-              <p>Mulai percakapan dengan mengirim pesan!</p>
+              <p>Start a conversation by sending a message!</p>
             </div>
           ) : (
             messages.map((message, index) => (
@@ -89,7 +89,7 @@ function AIChatRoom() {
           <div className="flex gap-2">
             <textarea
               className="textarea textarea-bordered flex-1 resize-none"
-              placeholder="Ketik pesan Anda..."
+              placeholder="Type your message..."
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
