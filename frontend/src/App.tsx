@@ -1,64 +1,15 @@
-import { useState } from 'react';
-import axios from 'axios';
-
-interface ChatMessage {
-  role: 'user' | 'assistant';
-  content: string;
-}
+import useAIChat from './modules/AIChat/hooks/useAIChat';
 
 function App() {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
-  /**
-   * Send message to chat API
-   */
-  const sendMessage = async () => {
-    if (!inputMessage.trim() || isLoading) return;
-
-    const userMessage: ChatMessage = {
-      role: 'user',
-      content: inputMessage.trim()
-    };
-
-    // Add user message to chat
-    setMessages(prev => [...prev, userMessage]);
-    setInputMessage('');
-    setIsLoading(true);
-
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_BACKEND_URL || 'http://localhost:8000'}/v1/chat`,
-        {
-          message: userMessage.content,
-          chat_history: messages
-        },
-        {
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_BACKEND_BEARER || 'change_me'}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      const assistantMessage: ChatMessage = {
-        role: 'assistant',
-        content: response.data.response
-      };
-
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error('Error sending message:', error);
-      const errorMessage: ChatMessage = {
-        role: 'assistant',
-        content: 'Maaf, terjadi kesalahan. Silakan coba lagi.'
-      };
-      setMessages(prev => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const {
+    inputMessage,
+    messages,
+    isLoading,
+    setInputMessage,
+    sendMessage,
+    // clearMessages
+  } = useAIChat()
 
   /**
    * Handle enter key press

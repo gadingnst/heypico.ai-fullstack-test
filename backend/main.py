@@ -18,7 +18,7 @@ app.add_middleware(
   allow_headers=["*"],
 )
 
-BACKEND_BEARER = os.getenv("BACKEND_BEARER", "change_me")
+BACKEND_BEARER = os.getenv("BACKEND_BEARER", "change_me_strong_token")
 
 @app.get("/healthz")
 async def healthz():

@@ -214,7 +214,7 @@ npx serve -s dist -l 5173
 |----------|-------------|----------|----------|
 | `GMAPS_SERVER_KEY` | Google Maps Server API Key | Yes | - |
 | `GMAPS_EMBED_KEY` | Google Maps Embed API Key | Yes | - |
-| `BACKEND_BEARER` | Backend API authentication token | No | `change_me` |
+| `BACKEND_BEARER` | Backend API authentication token | No | `change_me_strong_token` |
 | `FRONTEND_ORIGIN` | Frontend URL for CORS | No | `http://localhost:5173` |
 
 ## Troubleshooting
