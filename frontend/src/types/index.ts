@@ -44,3 +44,36 @@ export interface SearchResponse {
 export interface ApiError {
   detail: string;
 }
+
+// Chat interface types
+export interface ChatMessage {
+  id: string;
+  content: string;
+  isUser: boolean;
+  timestamp: Date;
+  role: string; // "user" or "assistant"
+  places?: Place[]; // For search responses
+}
+
+export interface ChatSearchResponse {
+  query: string;
+  places: Place[];
+  response_message: string;
+}
+
+export interface RegularChatResponse {
+  response_message: string;
+  is_search_intent: boolean;
+}
+
+export interface ChatHistoryMessage {
+  role: string;
+  content: string;
+  timestamp?: string;
+}
+
+export interface ChatRequest {
+  message: string;
+  location_context?: string;
+  chat_history?: ChatHistoryMessage[];
+}

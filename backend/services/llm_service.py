@@ -10,9 +10,15 @@ USE_LOCAL_LLM = False  # Set to True to use local LLM, False for OpenAI
 LOCAL_LLM_URL = "http://host.docker.internal:11434/v1/chat/completions"
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
+class ChatMessage(BaseModel):
+  role: str  # "user" or "assistant"
+  content: str
+  timestamp: str | None = None
+
 class ChatRequest(BaseModel):
   message: str
   location_context: str | None = None
+  chat_history: list[ChatMessage] | None = None
 
 class ChatResponse(BaseModel):
   search_request: SearchRequest
@@ -23,10 +29,195 @@ class ChatSearchResponse(BaseModel):
   places: list
   response_message: str
 
+class RegularChatResponse(BaseModel):
+  response_message: str
+  is_search_intent: bool = False
+
 class LLMService:
   """
   Service for handling LLM operations to extract search requests from natural language
   """
+
+  @staticmethod
+  async def detect_search_intent(message: str, chat_history: list = None) -> bool:
+    """
+    Detect if the message requires location/place search or is just regular chat using LLM
+
+    Args:
+      message: User message to analyze
+      chat_history: Previous chat messages for context
+
+    Returns:
+      bool: True if message requires search, False for regular chat
+    """
+    if not USE_LOCAL_LLM and not OPENAI_API_KEY:
+      # Fallback to simple keyword detection if no LLM available
+      simple_keywords = ['cari', 'dimana', 'tempat', 'restoran', 'kafe', 'hotel', 'toko', 'mall']
+      return any(keyword in message.lower() for keyword in simple_keywords)
+
+    # Prepare context from chat history
+    context = ""
+    if chat_history:
+      recent_messages = chat_history[-4:]  # Last 4 messages for context
+      for msg in recent_messages:
+        role = "User" if msg.get('role') == 'user' else "Assistant"
+        context += f"{role}: {msg.get('content', '')}\n"
+
+    # Create system prompt for intent detection
+    system_prompt = """
+Anda adalah sistem deteksi intent yang menentukan apakah pesan user memerlukan pencarian lokasi/tempat BARU atau hanya chat biasa/diskusi tentang hasil yang sudah ada.
+
+Tugas Anda:
+- Analisis pesan user dan konteks percakapan
+- Tentukan apakah user ingin mencari tempat/lokasi BARU atau hanya chat biasa/diskusi hasil
+- Jawab hanya dengan "YES" jika memerlukan pencarian lokasi BARU, "NO" jika chat biasa/diskusi hasil
+
+Contoh yang memerlukan pencarian BARU (YES):
+- "cari restoran enak di Jakarta"
+- "dimana tempat nongkrong yang bagus?"
+- "ada rekomendasi kafe?"
+- "yang lain dong" (jika ingin tempat berbeda/baru)
+- "gimana kalau tempat berbeda?"
+- "cari di kota lain"
+
+Contoh chat biasa/diskusi hasil (NO):
+- "halo, apa kabar?"
+- "terima kasih"
+- "bagaimana cara memasak nasi?"
+- "ceritakan tentang sejarah Indonesia"
+- "mana menurut mu yang paling bagus?" (diskusi hasil pencarian)
+- "yang mana yang recommended?" (diskusi hasil pencarian)
+- "bisa kasih review lebih detail?" (diskusi hasil pencarian)
+- "jam berapa buka?" (tanya detail tempat yang sudah ditemukan)
+"""
+
+    user_prompt = f"""Konteks percakapan:
+{context}
+
+Pesan user terbaru: "{message}"
+
+PERHATIAN KHUSUS:
+1. Jika dalam konteks percakapan sudah ada hasil pencarian tempat/lokasi sebelumnya, dan user bertanya tentang rekomendasi/pilihan dari hasil tersebut, maka jawab NO
+2. Kata-kata seperti "dari ketiganya", "mana yang paling", "yang mana", "pilih yang", "recommended" biasanya merujuk pada diskusi hasil pencarian yang sudah ada
+3. Hanya jawab YES jika user jelas meminta pencarian tempat/lokasi yang BARU dan BERBEDA
+
+Apakah pesan ini memerlukan pencarian lokasi/tempat BARU?
+Jawab hanya YES atau NO."""
+
+    try:
+      if USE_LOCAL_LLM:
+        # Use local LLM
+        payload = {
+          "model": "llama3.2",
+          "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+          ],
+          "max_tokens": 10,
+          "temperature": 0.1
+        }
+
+        async with httpx.AsyncClient(timeout=30.0) as client:
+          response = await client.post(LOCAL_LLM_URL, json=payload)
+          response.raise_for_status()
+          result = response.json()
+          llm_response = result["choices"][0]["message"]["content"].strip().upper()
+          return "YES" in llm_response
+      else:
+        # Use OpenAI API
+        headers = {
+          "Authorization": f"Bearer {OPENAI_API_KEY}",
+          "Content-Type": "application/json"
+        }
+
+        payload = {
+          "model": "gpt-3.5-turbo",
+          "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+          ],
+          "max_completion_tokens": 10,
+          "temperature": 0.1
+        }
+
+        async with httpx.AsyncClient(timeout=30.0) as client:
+          response = await client.post("https://api.openai.com/v1/chat/completions",
+                                     headers=headers, json=payload)
+          response.raise_for_status()
+          result = response.json()
+          llm_response = result["choices"][0]["message"]["content"].strip().upper()
+          return "YES" in llm_response
+
+    except Exception as e:
+      print(f"🚨 Error in LLM intent detection: {str(e)}")
+      # Fallback to simple keyword detection
+      simple_keywords = ['cari', 'dimana', 'tempat', 'restoran', 'kafe', 'hotel', 'toko', 'mall']
+      return any(keyword in message.lower() for keyword in simple_keywords)
+
+  @staticmethod
+  async def generate_regular_chat_response(message: str, chat_history: list = None) -> str:
+    """
+    Generate response for regular chat without location search
+
+    Args:
+      message: User message
+      chat_history: Previous chat messages for context
+
+    Returns:
+      str: AI response message
+    """
+    if not USE_LOCAL_LLM and not OPENAI_API_KEY:
+      raise ValueError("OPENAI_API_KEY environment variable is required when using cloud LLM")
+
+    # Create system prompt for regular chat
+    system_prompt = """
+You are a helpful and friendly AI assistant. Respond naturally to the user's message.
+Keep your responses conversational and helpful. If the user asks about places or locations,
+suggest they can ask you to search for specific places.
+"""
+
+    messages = [{"role": "system", "content": system_prompt}]
+
+    # Add chat history if provided
+    if chat_history:
+      for chat in chat_history[-5:]:  # Last 5 messages for context
+        messages.append({"role": chat.get("role", "user"), "content": chat.get("content", "")})
+
+    messages.append({"role": "user", "content": message})
+
+    # Prepare API request
+    if USE_LOCAL_LLM:
+      api_url = LOCAL_LLM_URL
+      headers = {"Content-Type": "application/json"}
+      payload = {
+        "model": "phi3:3.8b",
+        "messages": messages,
+        "temperature": 0.7,
+        "max_tokens": 300
+      }
+    else:
+      api_url = "https://api.openai.com/v1/chat/completions"
+      headers = {
+        "Authorization": f"Bearer {OPENAI_API_KEY}",
+        "Content-Type": "application/json"
+      }
+      payload = {
+        "model": "gpt-3.5-turbo",
+        "messages": messages,
+        "temperature": 0.7,
+        "max_completion_tokens": 2048
+      }
+
+    async with httpx.AsyncClient() as client:
+      try:
+        response = await client.post(api_url, headers=headers, json=payload, timeout=30.0)
+        response.raise_for_status()
+        result = response.json()
+        return result["choices"][0]["message"]["content"]
+      except Exception as e:
+        llm_type = "Local LLM" if USE_LOCAL_LLM else "OpenAI API"
+        print(f"🚨 {llm_type} Error in regular chat: {str(e)}")
+        return "Maaf, saya mengalami kesulitan dalam merespons. Silakan coba lagi."
 
   @staticmethod
   async def generate_response_message(user_message: str, search_results: dict) -> str:
@@ -81,7 +272,7 @@ Berikan respons yang ramah dan informatif.
           {"role": "user", "content": user_prompt}
         ],
         "temperature": 0.7,
-        "max_tokens": 150
+        "max_completion_tokens": 150
       }
     else:
       api_url = "https://api.openai.com/v1/chat/completions"
@@ -96,7 +287,7 @@ Berikan respons yang ramah dan informatif.
           {"role": "user", "content": user_prompt}
         ],
         "temperature": 0.7,
-        "max_tokens": 150
+        "max_completion_tokens": 150
       }
 
     try:
@@ -206,7 +397,7 @@ Examples:
           {"role": "user", "content": user_message}
         ],
         "temperature": 0.1,
-        "max_tokens": 500
+        "max_completion_tokens": 500
       }
 
     async with httpx.AsyncClient() as client:
@@ -239,8 +430,16 @@ Examples:
               radius_m=bias_data.get("radius_m", 8000)
             )
 
+          # Validate and provide fallback for query
+          query = search_data.get("query")
+          if not query or query is None:
+            # Fallback: use original user message as query
+            query = user_message.strip()[:50]  # Limit to 50 chars
+            if not query:
+              query = "places"  # Ultimate fallback
+
           search_request = SearchRequest(
-            query=search_data["query"],
+            query=query,
             limit=search_data.get("limit", 10),
             min_rating=search_data.get("min_rating"),
             open_now=search_data.get("open_now"),
