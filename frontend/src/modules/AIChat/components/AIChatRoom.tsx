@@ -11,7 +11,7 @@ function AIChatRoom() {
     isLoading,
     setInputMessage,
     sendMessage,
-    // clearMessages
+    clearMessages
   } = useAIChat();
 
   /**
@@ -28,7 +28,7 @@ function AIChatRoom() {
     <div className="card bg-base-200 shadow-xl">
       <div className="card-body p-0">
         {/* Messages Area */}
-        <div className="h-96 overflow-y-auto p-4 space-y-4">
+        <div className="h-[70vh] overflow-y-auto p-4 space-y-4">
           {messages.length === 0 ? (
             <div className="text-center text-base-content/50 mt-20">
               <p>Mulai percakapan dengan mengirim pesan!</p>
@@ -96,6 +96,15 @@ function AIChatRoom() {
               rows={1}
               disabled={isLoading}
             />
+            {messages.length > 0 && (
+              <button
+                className="btn btn-warning"
+                onClick={clearMessages}
+                disabled={isLoading}
+              >
+                Clear
+              </button>
+            )}
             <button
               className="btn btn-primary"
               onClick={sendMessage}
@@ -104,7 +113,7 @@ function AIChatRoom() {
               {isLoading ? (
                 <span className="loading loading-spinner loading-sm"></span>
               ) : (
-                'Kirim'
+                'Send'
               )}
             </button>
           </div>
