@@ -36,13 +36,24 @@ class MapService:
                     location = place.get("location", {})
                     place_id = place.get("id")
                     rating = place.get("rating")
+
+                    # Convert Google's string price level to integer expected by frontend
+                    price_level_str = place.get("priceLevel")
+                    price_mapping = {
+                        "PRICE_LEVEL_INEXPENSIVE": 1,
+                        "PRICE_LEVEL_MODERATE": 2,
+                        "PRICE_LEVEL_EXPENSIVE": 3,
+                        "PRICE_LEVEL_VERY_EXPENSIVE": 4,
+                    }
+                    price_level = price_mapping.get(price_level_str)
+
                     processed = {
                         "name": place.get("displayName", {}).get("text"),
                         "place_id": place_id,
                         "address": place.get("formattedAddress"),
                         "rating": rating,
                         "user_ratings_total": place.get("userRatingCount"),
-                        "price_level": place.get("priceLevel"),
+                        "price_level": price_level,
                         "location": {
                             "lat": location.get("latitude"),
                             "lng": location.get("longitude"),
