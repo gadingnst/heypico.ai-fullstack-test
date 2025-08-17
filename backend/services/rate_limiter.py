@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 from functools import wraps
 
 # Default rate limiter configuration (10req/30min)
-DEFAULT_RATE_LIMIT = 3
+DEFAULT_RATE_LIMIT = 10
 DEFAULT_RATE_WINDOW = timedelta(minutes=30)
 
 class RateLimiter:
