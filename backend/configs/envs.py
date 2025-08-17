@@ -23,6 +23,10 @@ class Config:
   LLM_MAX_TOKENS: int = int(os.getenv("LLM_MAX_TOKENS", "2048"))
   LLM_TIMEOUT: float = float(os.getenv("LLM_TIMEOUT", "30.0"))
 
+  # Google Maps API Keys
+  GMAPS_SERVER_KEY: str = os.getenv("GMAPS_SERVER_KEY", "")
+  GMAPS_EMBED_KEY: str = os.getenv("GMAPS_EMBED_KEY", "")
+
   # System Prompt
   SYSTEM_PROMPT: str = os.getenv("SYSTEM_PROMPT", """
     You are a helpful and friendly AI assistant. Respond naturally to the user's message in English.

@@ -38,7 +38,8 @@ function useAIChat() {
 
       const assistantMessage: ChatMessage = {
         role: 'assistant',
-        content: _result.response
+        content: _result.response,
+        places: _result.places
       };
 
       setMessages(prev => [...prev, assistantMessage]);

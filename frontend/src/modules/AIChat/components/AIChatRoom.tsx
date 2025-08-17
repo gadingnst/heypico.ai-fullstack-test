@@ -61,7 +61,21 @@ function AIChatRoom() {
                       : 'chat-bubble-secondary'
                   }`}
                 >
-                  {message.content}
+                  <div>{message.content}</div>
+                  {message.places && message.places.map((p, i) => (
+                    p.embed_iframe_url ? (
+                      <div key={p.place_id || i} className="mt-2 space-y-1">
+                        {p.name && <div className="font-bold">{p.name}</div>}
+                        <iframe
+                          className="w-full h-64 rounded-md"
+                          src={p.embed_iframe_url}
+                          loading="lazy"
+                          allowFullScreen
+                          referrerPolicy="no-referrer-when-downgrade"
+                        ></iframe>
+                      </div>
+                    ) : null
+                  ))}
                 </div>
               </div>
             ))
