@@ -17,6 +17,7 @@ function App() {
 
         {/* Chat Container */}
         <AIChatRoom />
+
       </div>
     </div>
   );

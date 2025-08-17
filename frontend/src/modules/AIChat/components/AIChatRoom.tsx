@@ -1,5 +1,7 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
 import useAIChat from '@/modules/AIChat/hooks/useAIChat';
+import PlacesMap from '@/modules/Map/components/PlacesMap';
 
 /**
  * AI Chat Room component that handles the chat interface
@@ -61,21 +63,35 @@ function AIChatRoom() {
                       : 'chat-bubble-secondary'
                   }`}
                 >
-                  <div>{message.content}</div>
-                  {message.places && message.places.map((p, i) => (
-                    p.embed_iframe_url ? (
-                      <div key={p.place_id || i} className="mt-2 space-y-1">
-                        {p.name && <div className="font-bold">{p.name}</div>}
-                        <iframe
-                          className="w-full h-64 rounded-md"
-                          src={p.embed_iframe_url}
-                          loading="lazy"
-                          allowFullScreen
-                          referrerPolicy="no-referrer-when-downgrade"
-                        ></iframe>
-                      </div>
-                    ) : null
-                  ))}
+                  <div
+                    className="prose prose-sm max-w-none"
+                    style={{
+                      color: 'white',
+                      '--tw-prose-body': 'white',
+                      '--tw-prose-headings': 'white',
+                      '--tw-prose-lead': 'white',
+                      '--tw-prose-links': 'white',
+                      '--tw-prose-bold': 'white',
+                      '--tw-prose-counters': 'white',
+                      '--tw-prose-bullets': 'white',
+                      '--tw-prose-hr': 'white',
+                      '--tw-prose-quotes': 'white',
+                      '--tw-prose-quote-borders': 'white',
+                      '--tw-prose-captions': 'white',
+                      '--tw-prose-code': 'white',
+                      '--tw-prose-pre-code': 'white',
+                      '--tw-prose-pre-bg': 'rgba(255, 255, 255, 0.1)',
+                      '--tw-prose-th-borders': 'white',
+                      '--tw-prose-td-borders': 'white'
+                    } as React.CSSProperties}
+                  >
+                    <ReactMarkdown>{message.content}</ReactMarkdown>
+                  </div>
+                  {message.places && message.places.length > 0 && (
+                    <div className="mt-2">
+                      <PlacesMap places={message.places} />
+                    </div>
+                  )}
                 </div>
               </div>
             ))
