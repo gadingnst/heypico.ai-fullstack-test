@@ -15,4 +15,21 @@ const LocalStoragePersistor: StatePersistor = {
   }
 };
 
+/**
+ * Parse a value persisted by LocalStoragePersistor.onSet (JSON.stringify-ed).
+ * Returns parsed value if JSON, otherwise returns the raw string.
+ *
+ * @template T The expected type of the parsed value
+ * @param raw The raw string value from localStorage (or null)
+ * @returns The parsed value or null when not present
+ */
+export function parsePersistedValue<T = unknown>(raw: string | null): T | null {
+  if (raw === null) return null;
+  try {
+    return JSON.parse(raw) as T | null;
+  } catch {
+    return raw as unknown as T;
+  }
+}
+
 export default LocalStoragePersistor;

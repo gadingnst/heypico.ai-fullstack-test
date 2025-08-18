@@ -1,5 +1,6 @@
 import { AUTH_TOKEN_KEY } from "@/modules/Auth/hooks/useToken";
 import HttpAPI from "@/modules/HttpAPI";
+import { parsePersistedValue } from "@/libs/SWRGlobalState/LocalStorage.persistor";
 
 export interface Location {
   lat?: number;
@@ -31,7 +32,7 @@ export interface ChatResponse {
 }
 
 export async function chat(_userMsg: ChatMessage, _history: ChatMessage[]) {
-  const token = localStorage.getItem(AUTH_TOKEN_KEY) || ''
+  const token = parsePersistedValue<string>(localStorage.getItem(AUTH_TOKEN_KEY)) || '';
 
   const response = await HttpAPI.post(`/v1/chat`, {
     headers: {
