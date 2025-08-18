@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import AIChatRoom from '@/modules/AIChat/components/AIChatRoom';
-import { BACKEND_URL } from '@/configs/envs';
 import useAuthToken from '@/modules/Auth/hooks/useToken';
+import { auth } from '@/modules/Auth/Auth.api';
+import HttpAPI from '@/modules/HttpAPI';
 
 function App() {
   const { token, setToken } = useAuthToken();
@@ -15,27 +16,21 @@ function App() {
     setError('');
     setIsLoggingIn(true);
     try {
-      const res = await fetch(`${BACKEND_URL}/v1/auth`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      if (!res.ok) {
-        setError('Invalid credentials');
-        return;
-      }
-      const data = await res.json();
-      localStorage.setItem('token', data.token);
+      const data = await auth({ username, password });
       setToken(data.token);
-    } catch {
-      setError('Login failed');
+    } catch (error) {
+      const { status } = await HttpAPI.getErrorResponse(error);
+      if (status === 401) {
+        setError('Invalid credentials');
+      } else {
+        setError('Login failed');
+      }
     } finally {
       setIsLoggingIn(false);
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
     setToken(null);
   };
 

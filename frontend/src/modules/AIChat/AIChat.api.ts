@@ -1,6 +1,5 @@
 import { AUTH_TOKEN_KEY } from "@/modules/Auth/hooks/useToken";
-import { BACKEND_URL } from "@/configs/envs";
-import BaseHttp from "@/libs/BaseHttp";
+import HttpAPI from "@/modules/HttpAPI";
 
 export interface Location {
   lat?: number;
@@ -34,20 +33,16 @@ export interface ChatResponse {
 export async function chat(_userMsg: ChatMessage, _history: ChatMessage[]) {
   const token = localStorage.getItem(AUTH_TOKEN_KEY) || ''
 
-  const Http = new BaseHttp({
-    baseURL: BACKEND_URL,
+  const response = await HttpAPI.post(`/v1/chat`, {
     headers: {
       'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    }
-  })
-
-  const response = await Http.post(`/v1/chat`, {
+    },
     body: JSON.stringify({
       message: _userMsg.content,
       chat_history: _history.map(m => ({ role: m.role, content: m.content }))
     })
   })
+
   const result: ChatResponse = await response.json()
   return result
 }
