@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useStore } from "swr-global-state";
-import { chat, type ChatMessage } from "../AIChat.api";
-import LocalStoragePersistor from "../../../libs/SWRGlobalState/LocalStorage.persistor";
+import { chat, type ChatMessage } from "@/modules/AIChat/AIChat.api";
+import LocalStoragePersistor from "@/libs/SWRGlobalState/LocalStorage.persistor";
 
 function useAIChat() {
   const [messages, setMessages] = useStore<ChatMessage[]>({
@@ -45,9 +45,9 @@ function useAIChat() {
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error: unknown) {
       console.error('Error sending message:', error);
-      
+
       let errorContent = 'Sorry, an error occurred. Please try again.';
-      
+
       // Handle HTTP errors with specific messages from backend
       if (error && typeof error === 'object' && 'response' in error) {
         const httpError = error as { response: Response };
@@ -60,7 +60,7 @@ function useAIChat() {
           // If JSON parsing fails, use default message
         }
       }
-      
+
       const errorMessage: ChatMessage = {
         role: 'assistant',
         content: errorContent

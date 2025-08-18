@@ -1,15 +1,19 @@
 import { useState } from 'react';
 import AIChatRoom from '@/modules/AIChat/components/AIChatRoom';
 import { BACKEND_URL } from '@/configs/envs';
+import useAuthToken from '@/modules/Auth/hooks/useToken';
 
 function App() {
-  const [token, setToken] = useState<string | null>(() => localStorage.getItem('token'));
+  const { token, setToken } = useAuthToken();
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const handleLogin = async () => {
     setError('');
+    setIsLoggingIn(true);
     try {
       const res = await fetch(`${BACKEND_URL}/v1/auth`, {
         method: 'POST',
@@ -25,6 +29,8 @@ function App() {
       setToken(data.token);
     } catch {
       setError('Login failed');
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -45,6 +51,7 @@ function App() {
               placeholder="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
+              disabled={isLoggingIn}
             />
             <input
               type="password"
@@ -52,9 +59,21 @@ function App() {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              disabled={isLoggingIn}
             />
-            <button className="btn btn-primary w-full" onClick={handleLogin}>
-              Login
+            <button
+              className="btn btn-primary w-full"
+              onClick={handleLogin}
+              disabled={isLoggingIn}
+            >
+              {isLoggingIn ? (
+                <>
+                  <span className="loading loading-spinner loading-sm"></span>
+                  <span className="ml-2">Logging in...</span>
+                </>
+              ) : (
+                'Login'
+              )}
             </button>
           </div>
         </div>

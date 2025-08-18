@@ -1,5 +1,6 @@
-import { BACKEND_URL } from "../../configs/envs";
-import BaseHttp from "../../libs/BaseHttp";
+import { AUTH_TOKEN_KEY } from "@/modules/Auth/hooks/useToken";
+import { BACKEND_URL } from "@/configs/envs";
+import BaseHttp from "@/libs/BaseHttp";
 
 export interface Location {
   lat?: number;
@@ -31,7 +32,8 @@ export interface ChatResponse {
 }
 
 export async function chat(_userMsg: ChatMessage, _history: ChatMessage[]) {
-  const token = localStorage.getItem('token') || ''
+  const token = localStorage.getItem(AUTH_TOKEN_KEY) || ''
+
   const Http = new BaseHttp({
     baseURL: BACKEND_URL,
     headers: {
